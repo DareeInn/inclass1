@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const AppWithThemeToggle());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+class AppWithThemeToggle extends StatefulWidget {
+  const AppWithThemeToggle({Key? key}) : super(key: key);
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<AppWithThemeToggle> createState() => _AppWithThemeToggleState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _AppWithThemeToggleState extends State<AppWithThemeToggle> {
   ThemeMode _themeMode = ThemeMode.light;
 
   void _toggleTheme() {
@@ -35,14 +35,22 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.blue,
       ),
       themeMode: _themeMode,
-      home: HomePage(onToggleTheme: _toggleTheme),
+      home: HomePage(
+        onToggleTheme: _toggleTheme,
+        isDarkMode: _themeMode == ThemeMode.dark,
+      ),
     );
   }
 }
 
 class HomePage extends StatefulWidget {
   final VoidCallback onToggleTheme;
-  const HomePage({Key? key, required this.onToggleTheme}) : super(key: key);
+  final bool isDarkMode;
+  const HomePage({
+    Key? key,
+    required this.onToggleTheme,
+    required this.isDarkMode,
+  }) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -71,11 +79,7 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Counter & Image Toggle'),
         actions: [
           IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.nightlight_round
-                  : Icons.wb_sunny,
-            ),
+            icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
             onPressed: widget.onToggleTheme,
           ),
         ],
@@ -85,7 +89,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              'Counter: $_counter',
+              'Counter: \\$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 20),

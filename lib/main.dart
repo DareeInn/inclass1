@@ -1,136 +1,132 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: InClassTabbedDemo(),
+    return MaterialApp(
+      title: 'Stateful Lab',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: CounterWidget(),
     );
   }
 }
 
-class InClassTabbedDemo extends StatefulWidget {
-  const InClassTabbedDemo({super.key});
-
+class CounterWidget extends StatefulWidget {
   @override
-  State<InClassTabbedDemo> createState() => _InClassTabbedDemoState();
+  _CounterWidgetState createState() => _CounterWidgetState();
 }
 
-class _InClassTabbedDemoState extends State<InClassTabbedDemo>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final List<String> tabs = ['Text', 'Image', 'Button', 'List'];
+class _CounterWidgetState extends State<CounterWidget> {
+  int _counter = 0; // This is our STATE
+  final TextEditingController _controller = TextEditingController();
+  final List<int> _history = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: tabs.length, vsync: this);
+  Color get counterColor {
+    if (_counter == 0) return Colors.red;
+    if (_counter > 50) return Colors.blue;
+    return Colors.black;
+  }
+
+  void _setCounter(int value) {
+    if (value > 100) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Limit Reached!')));
+      return;
+    }
+    if (value < 0) {
+      // Prevent counter from going below 0
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Value cannot be negative!')));
+      return;
+    }
+    setState(() {
+      _history.add(_counter);
+      _counter = value;
+    });
+  }
+
+  void _undo() {
+    if (_history.isNotEmpty) {
+      setState(() {
+        _counter = _history.removeLast();
+      });
+    }
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('InClass 1 Tabs Demo'),
-        backgroundColor: Colors.deepPurple,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: tabs.map((tab) => Tab(text: tab)).toList(),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildTextTab(),
-          _buildImageTab(),
-          _buildButtonTab(),
-          _buildListTab(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextTab() {
-    return Container(
-      color: Colors.lightBlue[50],
-      padding: const EdgeInsets.all(20),
-      child: Column(
+      appBar: AppBar(title: Text('Interactive Counter')),
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const TextField(
-            decoration: InputDecoration(labelText: 'Darin Ward'),
+          Center(
+            child: Container(
+              color: Colors.blue.shade100,
+              padding: EdgeInsets.all(20),
+              child: Text(
+                '$_counter',
+                style: TextStyle(fontSize: 50.0, color: counterColor),
+              ),
+            ),
           ),
-          const SizedBox(height: 20),
-          Image.network(
-            'https://picsum.photos/200',
-            width: 150,
-            height: 150,
+          SizedBox(height: 20),
+          Slider(
+            min: 0,
+            max: 100,
+            value: _counter.toDouble(),
+            onChanged: (double value) {
+              _setCounter(value.toInt());
+            },
           ),
-          const SizedBox(height: 20),
-          const Card(
-            child: ListTile(
-              leading: Icon(Icons.person),
-              title: Text('Darin'),
-              subtitle: Text('Major: Computer Science'),
+          SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Enter value',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  child: Text('Set Value'),
+                  onPressed: () {
+                    int? value = int.tryParse(_controller.text);
+                    if (value == null) {
+                      // Not a number, ignore
+                      return;
+                    }
+                    _setCounter(value);
+                  },
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  child: Text('Undo'),
+                  onPressed: _history.isNotEmpty ? _undo : null,
+                ),
+              ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildImageTab() {
-    return Container(
-      color: Colors.pink[50],
-      alignment: Alignment.center,
-      child: Image.network(
-        'https://picsum.photos/250',
-        width: 200,
-        height: 200,
-      ),
-    );
-  }
-
-  Widget _buildButtonTab() {
-    return Container(
-      color: Colors.green[50],
-      alignment: Alignment.center,
-      child: ElevatedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Button Pressed!')),
-          );
-        },
-        child: const Text('Click Me'),
-      ),
-    );
-  }
-
-  Widget _buildListTab() {
-    return Container(
-      color: Colors.orange[50],
-      padding: const EdgeInsets.all(10),
-      child: ListView.builder(
-        itemCount: 10,
-        itemBuilder: (context, index) => Card(
-          child: ListTile(
-            leading: const Icon(Icons.list),
-            title: Text('Item ${index + 1}'),
-          ),
-        ),
       ),
     );
   }
